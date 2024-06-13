@@ -43,8 +43,8 @@ func client() {
 	io.Copy(os.Stdout, res.Body)
 }
 
-func DolarExchange(currency string) (*USDBRL, error) {
-	resp, error := http.Get("https://economia.awesomeapi.com.br/json/last/" + currency)
+func DolarExchange(url string) (*USDBRL, error) {
+	resp, error := http.Get(url)
 	if error != nil {
 		return nil, error
 	}
@@ -60,11 +60,11 @@ func DolarExchange(currency string) (*USDBRL, error) {
 		return nil, error
 	}
 
-	file, err := os.Create("rate-exchange.txt")
+	file, err := os.Create("exchange-rate.txt")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating file: %v\n", err)
 	}
 	defer file.Close()
-	_, err = file.WriteString(fmt.Sprintf("Dólar: %s", e.Usdbrl.Bid))
+	file.WriteString(fmt.Sprintf("Dólar: %s", e.Usdbrl.Bid))
 	return &e, nil
 }

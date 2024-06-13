@@ -8,21 +8,16 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", DolarExchangeHandler)
+	http.HandleFunc("/exchange-rate", DolarExchangeHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
 func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/exchange-rate" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	currency := r.URL.Query().Get("currency")
-	if currency == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	exchange, error := client.DolarExchange(currency)
+	exchange, error := client.DolarExchange("https://economia.awesomeapi.com.br/json/last/USD-BRL")
 	if error != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
