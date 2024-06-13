@@ -2,25 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
-)
 
-type USDBRL struct {
-	Usdbrl struct {
-		Code       string `json:"code"`
-		Codein     string `json:"codein"`
-		Name       string `json:"name"`
-		High       string `json:"high"`
-		Low        string `json:"low"`
-		VarBid     string `json:"varBid"`
-		PctChange  string `json:"pctChange"`
-		Bid        string `json:"bid"`
-		Ask        string `json:"ask"`
-		Timestamp  string `json:"timestamp"`
-		CreateDate string `json:"create_date"`
-	} `json:"USDBRL"`
-}
+	client "github.com/4lexRossi/go-dolar-exchange/Client"
+)
 
 func main() {
 	http.HandleFunc("/", DolarExchangeHandler)
@@ -37,7 +22,7 @@ func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	exchange, error := DolarExchange(currency)
+	exchange, error := client.DolarExchange(currency)
 	if error != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -46,24 +31,4 @@ func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(exchange.Usdbrl.Bid)
-}
-
-func DolarExchange(currency string) (*USDBRL, error) {
-	resp, error := http.Get("https://economia.awesomeapi.com.br/json/last/" + currency)
-	if error != nil {
-		return nil, error
-	}
-	defer resp.Body.Close()
-
-	body, error := io.ReadAll(resp.Body)
-	if error != nil {
-		return nil, error
-	}
-	var e USDBRL
-	error = json.Unmarshal(body, &e)
-	if error != nil {
-		return nil, error
-	}
-
-	return &e, nil
 }
