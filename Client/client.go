@@ -26,25 +26,17 @@ type USDBRL struct {
 	} `json:"USDBRL"`
 }
 
-func client() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+func DolarExchange(url string) (*USDBRL, error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer res.Body.Close()
-	io.Copy(os.Stdout, res.Body)
-}
-
-func DolarExchange(url string) (*USDBRL, error) {
-	resp, error := http.Get(url)
+	resp, error := http.DefaultClient.Do(req)
 	if error != nil {
 		return nil, error
 	}
