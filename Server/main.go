@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	client "github.com/4lexRossi/go-dolar-exchange/Client"
@@ -24,8 +24,7 @@ func main() {
 }
 
 func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	dsn := "root:root@tcp(localhost:3306)/lexlabs?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
