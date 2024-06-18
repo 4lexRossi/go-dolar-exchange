@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -27,17 +28,19 @@ type USDBRL struct {
 }
 
 func DolarExchange(url string) (*USDBRL, error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		panic(err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300*time.Millisecond))
+	defer cancel()
+
+	req = req.WithContext(ctx)
+
 	resp, error := http.DefaultClient.Do(req)
 	if error != nil {
+		log.Println("Request take too long")
 		return nil, error
 	}
 	defer resp.Body.Close()

@@ -24,19 +24,19 @@ func main() {
 }
 
 func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 	db.AutoMigrate(&RateExchange{})
 
-	ctx := r.Context()
 	if r.URL.Path != "/exchange-rate" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	select {
-	case <-time.After(200 * time.Millisecond):
+	case <-time.Tick(time.Duration((200 * time.Millisecond))):
 		log.Println("Request successfully")
 		exchange, error := client.DolarExchange("https://economia.awesomeapi.com.br/json/last/USD-BRL")
 		if error != nil {
@@ -53,6 +53,6 @@ func DolarExchangeHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	case <-ctx.Done():
 		log.Println("Resquest Failed")
+		w.WriteHeader(http.StatusGatewayTimeout)
 	}
-
 }
