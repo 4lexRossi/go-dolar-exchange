@@ -27,9 +27,10 @@ type USDBRL struct {
 	} `json:"USDBRL"`
 }
 
-func DolarExchange(url string) (*USDBRL, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func DolarExchange(ctxReceived context.Context, url string) (*USDBRL, error) {
+	req, err := http.NewRequestWithContext(ctxReceived, http.MethodGet, url, nil)
 	if err != nil {
+		log.Println("Request take too long")
 		panic(err)
 	}
 
@@ -40,7 +41,7 @@ func DolarExchange(url string) (*USDBRL, error) {
 
 	resp, error := http.DefaultClient.Do(req)
 	if error != nil {
-		log.Println("Request take too long")
+		log.Println("Response take too long")
 		return nil, error
 	}
 	defer resp.Body.Close()
