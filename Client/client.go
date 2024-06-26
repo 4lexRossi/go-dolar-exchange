@@ -1,66 +1,63 @@
-package client
+package main
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
 )
 
-type USDBRL struct {
-	Usdbrl struct {
-		Code       string `json:"code"`
-		Codein     string `json:"codein"`
-		Name       string `json:"name"`
-		High       string `json:"high"`
-		Low        string `json:"low"`
-		VarBid     string `json:"varBid"`
-		PctChange  string `json:"pctChange"`
-		Bid        string `json:"bid"`
-		Ask        string `json:"ask"`
-		Timestamp  string `json:"timestamp"`
-		CreateDate string `json:"create_date"`
-	} `json:"USDBRL"`
-}
+const (
+	serverURL  = "http://localhost:8080/cotacao"
+	timeout    = 300 * time.Millisecond
+	outputFile = "cotacao.txt"
+)
 
-func DolarExchange(ctxReceived context.Context, url string) (*USDBRL, error) {
-	req, err := http.NewRequestWithContext(ctxReceived, http.MethodGet, url, nil)
-	if err != nil {
-		log.Println("Request take too long")
-		panic(err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300*time.Millisecond))
+func main() {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	req = req.WithContext(ctx)
+	// Fazer requisição para o servidor
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL, nil)
+	if err != nil {
+		log.Fatalf("Erro ao criar requisição HTTP: %v", err)
+	}
 
-	resp, error := http.DefaultClient.Do(req)
-	if error != nil {
-		log.Println("Response take too long")
-		return nil, error
+	// Enviar a requisição e obter a resposta
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Erro ao realizar requisição HTTP: %v", err)
 	}
 	defer resp.Body.Close()
 
-	body, error := io.ReadAll(resp.Body)
-	if error != nil {
-		return nil, error
-	}
-	var e USDBRL
-	error = json.Unmarshal(body, &e)
-	if error != nil {
-		return nil, error
+	// Ler a resposta
+	var exchangeRate map[string]float64
+	if err := json.NewDecoder(resp.Body).Decode(&exchangeRate); err != nil {
+		log.Fatalf("Erro ao decodificar resposta JSON: %v", err)
 	}
 
-	file, err := os.Create("exchange-rate.txt")
+	// Salvar a cotação em um arquivo
+	bid, ok := exchangeRate["bid"]
+	if !ok {
+		log.Fatal("Campo 'bid' não encontrado na resposta")
+	}
+
+	content := fmt.Sprintf("Dólar: %.2f", bid)
+
+	file, err := os.Create(outputFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating file: %v\n", err)
+		log.Fatalf("Erro ao criar arquivo: %v", err)
 	}
 	defer file.Close()
-	file.WriteString(fmt.Sprintf("Dólar: %s", e.Usdbrl.Bid))
-	return &e, nil
+
+	if _, err := file.WriteString(content); err != nil {
+		log.Fatalf("Erro ao escrever no arquivo: %v", err)
+	}
+
+	log.Printf("Cotação do dólar salva com sucesso no arquivo %s", outputFile)
 }
